@@ -5,8 +5,8 @@
 	using UnityEngine;
 
 	/// <summary>
-	/// この抽象クラスを継承したクラスを、シーンファイル内のRootのGameObjectにアタッチしてください
-	/// シーンファイル内にSceneクラスは一つとする
+	/// この抽象クラスを継承したクラスを、シーンファイル内のRootのGameObjectにアタッチしてください。
+	/// シーンファイル内にSceneクラスは一つとする。
 	/// </summary>
 	public abstract class Scene : MonoBehaviour
 	{
