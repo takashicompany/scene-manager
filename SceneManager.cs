@@ -19,12 +19,9 @@
 		
 		public event InitDelegate onInitEvent;
 
-		void Awake()
-		{
-			Init();
-		}
+		public event InitDelegate onInitCompleteEvent;
 
-		private void Init()
+		public void Init()
 		{
 			var count = UnityEngine.SceneManagement.SceneManager.sceneCount;
 
@@ -136,12 +133,20 @@
 			if (!_loadedScenes.Contains(scene))
 			{
 				_loadedScenes.Add(scene);
+				
 				scene.Init(this, sceneFile);
+
 				if (onInitEvent != null)
 				{
 					onInitEvent(scene);
 				}
+				
 				scene.OnInit();
+
+				if (onInitCompleteEvent != null)
+				{
+					onInitCompleteEvent(scene);
+				}
 			}
 		}
 
