@@ -183,14 +183,14 @@
 			}
 		}
 
-		public void UnLoad(Scene scene)
+		public void Unload(Scene scene)
 		{
 			_loadedScenes.RemoveAll(m => m.sceneFile == scene.sceneFile);
 			var sceneFile = scene.sceneFile;
 			UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(sceneFile);
 		}
 
-		public void UnLoad(Scene scene, DestoryDelegate callback)
+		public void Unload(Scene scene, DestoryDelegate callback)
 		{
 			StartCoroutine(CoUnload(scene, callback));
 		}
