@@ -20,7 +20,21 @@
 			this.sceneFile = sceneFile;
 		}
 
+		protected virtual void Start()
+		{
+			if (_sceneManager == null)
+			{
+				var sceneManager = new SceneManager();
+				sceneManager.Init();
+			}
+		}
+
 		public virtual void OnInit()
+		{
+
+		}
+
+		public virtual void OnPlayByEditor()
 		{
 
 		}

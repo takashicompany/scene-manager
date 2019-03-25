@@ -8,7 +8,7 @@
 	/// 簡易シーンマネージャー
 	/// 同じシーンを複数ロードできる
 	/// </summary>
-	public class SceneManager : MonoBehaviour
+	public class SceneManager
 	{
 		public delegate void LoadDelegate<T>(T result) where T : Scene;
 		public delegate void DestoryDelegate();
@@ -20,6 +20,11 @@
 		public event InitDelegate onInitEvent;
 
 		public event InitDelegate onInitCompleteEvent;
+
+		public SceneManager()
+		{
+			
+		}
 
 		public void Init()
 		{
@@ -35,6 +40,16 @@
 					{
 						InitScene(scene, sceneFile);
 					}
+				}
+			}
+
+			var mainSceneFile = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+
+			foreach (var scene in _loadedScenes)
+			{
+				if (mainSceneFile == scene.sceneFile)
+				{
+					scene.OnPlayByEditor();
 				}
 			}
 		}
@@ -78,25 +93,26 @@
 
 		public void LoadAsync<T>(LoadDelegate<T> callback) where T : Scene
 		{
-			StartCoroutine(CoLoadAsync<T>(callback));
-		}
-
-		public IEnumerator CoLoadAsync<T>(LoadDelegate<T> callback) where T : Scene
-		{
 			var sceneName = typeof(T).Name;
-
 			var asyncOperation = UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(sceneName, UnityEngine.SceneManagement.LoadSceneMode.Additive);
 			
-			while (!asyncOperation.isDone)
+			System.Action<AsyncOperation> task = async =>
 			{
-				yield return null;
+				var scene = ProcessSceneFile<T>();
+
+				if (callback != null)
+				{
+					callback(scene);
+				}
+			};
+
+			if (asyncOperation.isDone)
+			{
+				task(asyncOperation);
 			}
-
-			var resultScene = ProcessSceneFile<T>();
-
-			if (callback != null)
+			else
 			{
-				callback(resultScene);
+				asyncOperation.completed += task;
 			}
 		}
 
@@ -110,7 +126,7 @@
 				return null;
 			}
 
-			T resultScene = null;
+			T result = null;
 
 			foreach (var root in sceneFile.GetRootGameObjects())
 			{
@@ -118,14 +134,14 @@
 				if (scene != null)
 				{
 					InitScene(scene, sceneFile);
-					if (resultScene == null && typeof(T) == scene.GetType())
+					if (result == null && typeof(T) == scene.GetType())
 					{
-						resultScene = (T)scene;
+						result = (T)scene;
 					}
 				}
 			}
 			
-			return resultScene;
+			return result;
 		}
 
 		private void InitScene(Scene scene, UnityEngine.SceneManagement.Scene sceneFile)
@@ -161,25 +177,27 @@
 
 		public void Unload<T>(DestoryDelegate callback) where T : Scene
 		{
-			StartCoroutine(CoUnload<T>(callback));
-		}
-
-		private IEnumerator CoUnload<T>(DestoryDelegate callback) where T : Scene
-		{
 			var sceneType = typeof(T);
 			_loadedScenes.RemoveAll(m => m.GetType() == sceneType);
 
 			var sceneName = sceneType.Name;
 			var asyncOperation = UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(sceneName);
 
-			while (!asyncOperation.isDone)
+			System.Action<AsyncOperation> task = async =>
 			{
-				yield return null;
-			}
+				if (callback != null)
+				{
+					callback();
+				}
+			};
 
-			if (callback != null)
+			if (asyncOperation.isDone)
 			{
-				callback();
+				task(asyncOperation);
+			}
+			else
+			{
+				asyncOperation.completed += task;
 			}
 		}
 
@@ -192,23 +210,25 @@
 
 		public void Unload(Scene scene, DestoryDelegate callback)
 		{
-			StartCoroutine(CoUnload(scene, callback));
-		}
-
-		private IEnumerator CoUnload(Scene scene, DestoryDelegate callback)
-		{
 			_loadedScenes.RemoveAll(m => m.sceneFile == scene.sceneFile);
 
 			var asyncOperation = UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(scene.sceneFile);
 
-			while (!asyncOperation.isDone)
+			System.Action<AsyncOperation> task = async =>
 			{
-				yield return null;
-			}
+				if (callback != null)
+				{
+					callback();
+				}
+			};
 
-			if (callback != null)
+			if (asyncOperation.isDone)
 			{
-				callback();
+				task(asyncOperation);
+			}
+			else
+			{
+				asyncOperation.completed += task;
 			}
 		}
 	}
