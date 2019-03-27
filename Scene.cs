@@ -29,12 +29,18 @@
 			}
 		}
 
+		/// <summary>
+		/// SceneManagerに登録された際に呼ばれる
+		/// </summary>
 		public virtual void OnInit()
 		{
 
 		}
 
-		public virtual void OnPlayByEditor()
+		/// <summary>
+		/// このシーンから起動された場合に呼ばれる
+		/// </summary>
+		public virtual void OnLaunch()
 		{
 
 		}

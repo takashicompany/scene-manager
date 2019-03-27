@@ -49,7 +49,7 @@
 			{
 				if (mainSceneFile == scene.sceneFile)
 				{
-					scene.OnPlayByEditor();
+					scene.OnLaunch();
 				}
 			}
 		}
