@@ -30,7 +30,7 @@
 		}
 
 		/// <summary>
-		/// SceneManagerに登録された際に呼ばれる
+		/// SceneManagerに登録された際に一度だけ呼ばれる
 		/// </summary>
 		public virtual void OnInit()
 		{
@@ -38,7 +38,7 @@
 		}
 
 		/// <summary>
-		/// このシーンから起動された場合に呼ばれる
+		/// このシーンから再生を開始したら呼ばれる
 		/// </summary>
 		public virtual void OnLaunch()
 		{
