@@ -1,4 +1,4 @@
-﻿namespace TakashiCompany.Unity.SceneManagement
+﻿namespace takashicompany.Unity.SceneManagement
 {
 	using System.Collections;
 	using System.Collections.Generic;
