@@ -1,7 +1,9 @@
 ﻿namespace takashicompany.Unity.SceneManagement
 {
+	using System;
 	using System.Collections;
 	using System.Collections.Generic;
+	using System.Linq;
 	using UnityEngine;
 
 	/// <summary>
@@ -10,10 +12,11 @@
 	/// </summary>
 	public class SceneManager
 	{
+		public delegate void LoadDelegate(Scene scene);
 		public delegate void LoadDelegate<T>(T result) where T : Scene;
 		public delegate void DestoryDelegate();
 
-		private List<Scene> _loadedScenes = new List<Scene>();
+		private HashSet<Scene> _loadedScenes = new HashSet<Scene>();
 
 		public delegate void InitDelegate(Scene scene);
 		
@@ -38,7 +41,7 @@
 					var scene = root.GetComponent<Scene>();
 					if (scene != null)
 					{
-						InitScene(scene, sceneFile);
+						TryInitScene(scene, sceneFile);
 					}
 				}
 			}
@@ -54,22 +57,27 @@
 			}
 		}
 
-		public T Find<T>() where T: Scene
+		public IEnumerable<Scene> GetLoadedScenes()
+		{
+			return _loadedScenes;
+		}
+
+		public T Get<T>() where T: Scene
 		{
 			var sceneType = typeof(T);
-			var scene = _loadedScenes.Find(m => m.GetType() == sceneType);
+			var scene = _loadedScenes.FirstOrDefault(m => m.GetType() == sceneType);
 			return (T)scene;
 		}
 
-		public List<Scene> FindAll<T>() where T: Scene
+		public List<Scene> GetAll<T>() where T: Scene
 		{
 			var sceneType = typeof(T);
-			return _loadedScenes.FindAll(m => m.GetType() == sceneType);
+			return _loadedScenes.Where(m => m.GetType() == sceneType).ToList();
 		}
 
 		public void FindOrLoadAsync<T>(LoadDelegate<T> callback) where T : Scene
 		{
-			var scene = Find<T>();
+			var scene = Get<T>();
 
 			if (scene != null)
 			{
@@ -80,25 +88,39 @@
 			}
 			else
 			{
-				scene = ProcessSceneFile<T>();
+				var s = FindLoadedScene(typeof(T));
 
-				if (scene != null)
+				if (s != null)
 				{
-					callback((T)scene);
+					callback((T)s);
 				}
-
-				LoadAsync<T>(callback);
+				else
+				{
+					LoadAsync<T>(callback);
+				}
 			}
 		}
 
 		public void LoadAsync<T>(LoadDelegate<T> callback) where T : Scene
 		{
-			var sceneName = typeof(T).Name;
+			var type = typeof(T);
+			LoadAsync(type, scene =>
+			{
+				if (callback != null)
+				{
+					callback((T)scene);
+				}
+			});
+		}
+
+		public void LoadAsync(Type type, LoadDelegate callback)
+		{
+			var sceneName = type.Name;
 			var asyncOperation = UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(sceneName, UnityEngine.SceneManagement.LoadSceneMode.Additive);
 			
 			System.Action<AsyncOperation> task = async =>
 			{
-				var scene = ProcessSceneFile<T>();
+				var scene = FindLoadedScene(type);
 
 				if (callback != null)
 				{
@@ -116,9 +138,9 @@
 			}
 		}
 
-		private T ProcessSceneFile<T>() where T : Scene
+		private Scene FindLoadedScene(Type type)
 		{
-			var sceneName = typeof(T).Name;
+			var sceneName = type.Name;
 			var sceneFile = UnityEngine.SceneManagement.SceneManager.GetSceneByName(sceneName);
 			
 			if (!sceneFile.IsValid())
@@ -126,17 +148,17 @@
 				return null;
 			}
 
-			T result = null;
+			Scene result = null;
 
 			foreach (var root in sceneFile.GetRootGameObjects())
 			{
 				var scene = root.GetComponent<Scene>();
 				if (scene != null)
 				{
-					InitScene(scene, sceneFile);
-					if (result == null && typeof(T) == scene.GetType())
+					TryInitScene(scene, sceneFile);
+					if (result == null)
 					{
-						result = (T)scene;
+						result = scene;
 					}
 				}
 			}
@@ -144,7 +166,7 @@
 			return result;
 		}
 
-		private void InitScene(Scene scene, UnityEngine.SceneManagement.Scene sceneFile)
+		private void TryInitScene(Scene scene, UnityEngine.SceneManagement.Scene sceneFile)
 		{
 			if (!_loadedScenes.Contains(scene))
 			{
@@ -169,7 +191,8 @@
 		public void Unload<T>() where T : Scene
 		{
 			var sceneType = typeof(T);
-			_loadedScenes.RemoveAll(m => m.GetType() == sceneType);
+
+			_loadedScenes.RemoveWhere(m => m.GetType() == sceneType);
 
 			var sceneName = sceneType.Name;
 			UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(sceneName);
@@ -178,7 +201,7 @@
 		public void Unload<T>(DestoryDelegate callback) where T : Scene
 		{
 			var sceneType = typeof(T);
-			_loadedScenes.RemoveAll(m => m.GetType() == sceneType);
+			_loadedScenes.RemoveWhere(m => m.GetType() == sceneType);
 
 			var sceneName = sceneType.Name;
 			var asyncOperation = UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(sceneName);
@@ -203,14 +226,14 @@
 
 		public void Unload(Scene scene)
 		{
-			_loadedScenes.RemoveAll(m => m.sceneFile == scene.sceneFile);
+			_loadedScenes.Remove(scene);
 			var sceneFile = scene.sceneFile;
 			UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(sceneFile);
 		}
 
 		public void Unload(Scene scene, DestoryDelegate callback)
 		{
-			_loadedScenes.RemoveAll(m => m.sceneFile == scene.sceneFile);
+			_loadedScenes.Remove(scene);
 
 			var asyncOperation = UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(scene.sceneFile);
 
