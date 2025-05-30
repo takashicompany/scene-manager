@@ -101,7 +101,7 @@
 			}
 		}
 
-		public void LoadAsync<T>(LoadDelegate<T> callback) where T : Scene
+		public void LoadAsync<T>(LoadDelegate<T> callback = null) where T : Scene
 		{
 			var type = typeof(T);
 			LoadAsync(type, scene =>
@@ -113,7 +113,7 @@
 			});
 		}
 
-		public void LoadAsync(Type type, LoadDelegate callback)
+		public void LoadAsync(Type type, LoadDelegate callback = null)
 		{
 			var sceneName = type.Name;
 			var asyncOperation = UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(sceneName, UnityEngine.SceneManagement.LoadSceneMode.Additive);
