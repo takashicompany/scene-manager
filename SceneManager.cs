@@ -75,7 +75,7 @@
 			return _loadedScenes.Where(m => m.GetType() == sceneType).ToList();
 		}
 
-		public void FindOrLoadAsync<T>(LoadDelegate<T> callback) where T : Scene
+		public void FindOrLoadAsync<T>(LoadDelegate<T> callback = null) where T : Scene
 		{
 			var scene = Get<T>();
 
@@ -101,7 +101,7 @@
 			}
 		}
 
-		public void LoadAsync<T>(LoadDelegate<T> callback = null) where T : Scene
+		private void LoadAsync<T>(LoadDelegate<T> callback = null) where T : Scene
 		{
 			var type = typeof(T);
 			LoadAsync(type, scene =>
@@ -113,7 +113,7 @@
 			});
 		}
 
-		public void LoadAsync(Type type, LoadDelegate callback = null)
+		private void LoadAsync(Type type, LoadDelegate callback = null)
 		{
 			var sceneName = type.Name;
 			var asyncOperation = UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(sceneName, UnityEngine.SceneManagement.LoadSceneMode.Additive);
